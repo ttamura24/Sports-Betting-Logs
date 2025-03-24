@@ -5,9 +5,12 @@ export const calculateAmountWon = (resultText, odds, amountWagered) => {
     const oddsNum = parseFloat(odds);
     const wager = parseFloat(amountWagered);
     
-    return oddsNum >= 0 
-      ? (wager * (oddsNum / 100)).toFixed(2)
-      : (wager * (100 / Math.abs(oddsNum))).toFixed(2);
+    let winnings = oddsNum >= 0 
+      ? wager * (oddsNum / 100)
+      : wager * (100 / Math.abs(oddsNum));
+      
+    // Add wager to winnings numerically, then format
+    return (winnings + wager).toFixed(2);
   } 
   
   if (resultText === 'Loss') {
@@ -15,7 +18,7 @@ export const calculateAmountWon = (resultText, odds, amountWagered) => {
   } 
   
   if (resultText === 'Push') {
-    return amountWagered;
+    return parseFloat(amountWagered).toFixed(2);
   }
   
   return '0';
@@ -50,5 +53,5 @@ export const checkIfFormValid = (formData) => {
     formData.odds !== '' && 
     checkIfValidOdds(formData.odds) && 
     formData.amountWagered !== '' && 
-    formData.result !== '';
+    formData.resultID !== '';
 }

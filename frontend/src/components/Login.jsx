@@ -66,7 +66,7 @@ const Login = ({ onLogin }) => {
         }
 
         console.log('Login successful:', data);
-        onLogin(true, data.user.username, data.user._id);
+        onLogin(true, data.user.username, data.user.id);
         navigate('/dashboard');
       }
     } catch (err) {

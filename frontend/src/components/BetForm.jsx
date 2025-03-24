@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import '../styles/BetForm.css'
 import { calculateAmountWon, checkIfValidOdds, checkIfValidSpread, checkIfValidOverUnder, checkIfFormValid } from '../utils'
 
-const BetForm = () => {
+const BetForm = ({ userID }) => {
   const { id } = useParams()
   const navigate = useNavigate()
   
@@ -24,11 +24,11 @@ const BetForm = () => {
     betTypeID: '', 
     description: '',
     odds: '',
-    result: 'pending',
+    resultID: 'pending',
     amountWagered: '',
     amountWon: '',
     spreadLine: '',
-    overUnderType: 'over',
+    overUnderType: 'Over',
     overUnderLine: '',
     datePlaced: new Date().toISOString().split('T')[0],
   })
@@ -72,14 +72,14 @@ const BetForm = () => {
 
   // calculate amount won based on result, odds, and amount wagered
   useEffect(() => {
-    const resultText = result.find(r => r._id === formData.result)?.result;
+    const resultText = result.find(r => r._id === formData.resultID)?.result;
     const amountWon = calculateAmountWon(resultText, formData.odds, formData.amountWagered);
     
     setFormData(prevState => ({
       ...prevState,
       amountWon
     }));
-  }, [formData.result, formData.odds, formData.amountWagered, result]);
+  }, [formData.resultID, formData.odds, formData.amountWagered, result]);
 
   // check for errors in form input
   useEffect(() => {
@@ -125,7 +125,9 @@ const BetForm = () => {
     let description = '';
     switch (betType) {
       case 'Spread':
-        description = `${formData.spreadLine}`;
+        description = formData.spreadLine > 0 
+          ? `+${formData.spreadLine}`
+          : `${formData.spreadLine}`;
         break;
       case 'Over/Under':
         description = `${formData.overUnderType} ${formData.overUnderLine}`;
@@ -159,17 +161,19 @@ const BetForm = () => {
     e.preventDefault()
     try {
       const betData = {
-        userID: '67e0b84b46dabd01144b5549',
+        userID: userID,
         sportsbookID: formData.sportsbookID,
         teamID: formData.teamID,
         betTypeID: formData.betTypeID,
         description: formData.description,
         datePlaced: formData.datePlaced,
         odds: formData.odds,
-        result: formData.result,
+        resultID: formData.resultID,
         amountWagered: formData.amountWagered,
         amountWon: formData.amountWon,
       }
+
+      console.log('bet data', betData)
 
       const response = await fetch('/api/add-bet', {
         method: 'POST',
@@ -282,8 +286,8 @@ const BetForm = () => {
                   onChange={handleChange}
                   required
                 >
-                  <option value="over">Over</option>
-                  <option value="under">Under</option>
+                  <option value="Over">Over</option>
+                  <option value="Under">Under</option>
                 </select>
                 <input
                   type="number"
@@ -342,8 +346,8 @@ const BetForm = () => {
           <label htmlFor="result">Result</label>
           <select
             id="result"
-            name="result"
-            value={formData.result}
+            name="resultID"
+            value={formData.resultID}
             onChange={handleChange}
             required
           >

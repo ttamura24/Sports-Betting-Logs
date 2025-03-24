@@ -1,7 +1,8 @@
 .dashboard-container {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   padding: 2rem;
-  max-width: 1200px;
+  width: 100%;
+  max-width: 1800px;
   margin: 2rem auto;
   color: white;
   background-color: #2d2d2d;
@@ -50,7 +51,7 @@ body {
   display: flex;
   gap: 1.5rem;
   margin-bottom: 2rem;
-  background-color: #f8f9fa;
+  background-color: #3d3d3d;
   padding: 1.5rem;
   border-radius: 8px;
 }
@@ -111,6 +112,11 @@ td {
   padding: 1rem;
   color: white;
   border-bottom: 1px solid #4d4d4d;
+  text-align: left;
+}
+
+td:last-child {
+  text-align: center;
 }
 
 tr:last-child td {
@@ -122,6 +128,8 @@ tr:last-child td {
   border-radius: 999px;
   font-size: 0.875rem;
   font-weight: 500;
+  display: inline-block;
+  text-align: left;
 }
 
 .result-badge.win {

@@ -54,7 +54,7 @@ function App() {
             path="/bet/:id?" 
             element={
               isAuthenticated ? (
-                <BetForm />
+                <BetForm userID={userID} />
               ) : (
                 <Navigate to="/login" replace />
               )

@@ -29,7 +29,7 @@ const betSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Odds are required'],
   },
-  result: {
+  resultID: {
     type: String,
     required: [true, 'Result is required'],
   },
