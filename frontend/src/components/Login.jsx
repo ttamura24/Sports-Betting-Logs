@@ -23,7 +23,7 @@ const Login = ({ onLogin }) => {
     e.preventDefault()
     try {
       if (isSignup) {
-        const response = await fetch('http://localhost:5000/api/signup', {
+        const response = await fetch('/api/signup', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -46,7 +46,7 @@ const Login = ({ onLogin }) => {
         onLogin(true, data.user.username);
         navigate('/dashboard');
       } else {
-        const response = await fetch('http://localhost:5000/api/login', {
+        const response = await fetch('/api/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -66,7 +66,7 @@ const Login = ({ onLogin }) => {
         }
 
         console.log('Login successful:', data);
-        onLogin(true, data.user.username);
+        onLogin(true, data.user.username, data.user._id);
         navigate('/dashboard');
       }
     } catch (err) {

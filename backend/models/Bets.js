@@ -9,15 +9,19 @@ const betSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Sportsbook ID is required'],
   },
-  betType: {
+  teamID: {
+    type: String,
+    required: [true, 'Team ID is required'],
+  },
+  betTypeID: {
     type: String,
     required: [true, 'Bet type is required'],
   },
-  betList: {
-    type: Array,
-    required: [true, 'Bet list is required'],
+  description: {
+    type: String,
+    required: [true, 'Description is required'],
   },
-  timeBetPlaced: {
+  datePlaced: {
     type: Date,
     default: Date.now
   },

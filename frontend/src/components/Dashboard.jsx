@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../styles/Dashboard.css'
 
-const Dashboard = ({ onLogout, username }) => {
+const Dashboard = ({ onLogout, username, userID }) => {
   const [bets, setBets] = useState([])
   const [filters, setFilters] = useState({
     sportsbook: '',

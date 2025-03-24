@@ -3,6 +3,7 @@ import cors from 'cors';
 import session from 'express-session';
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
+import betOptionsRoutes from './routes/betOptions.js';
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use(session({
 connectDB();
 
 app.use('/api', authRoutes);
+app.use('/api', betOptionsRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

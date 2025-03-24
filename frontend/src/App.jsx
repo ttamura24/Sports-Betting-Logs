@@ -9,10 +9,12 @@ import BetForm from './components/BetForm'
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [username, setUsername] = useState('')
-
-  const handleLogin = (status, username) => {
+  const [userID, setUserID] = useState('')
+  
+  const handleLogin = (status, username, userID) => {
     setIsAuthenticated(status)
     setUsername(username)
+    setUserID(userID)
   }
 
   const handleLogout = () => {
@@ -41,6 +43,7 @@ function App() {
                 <Dashboard 
                   onLogout={handleLogout}
                   username={username}
+                  userID={userID}
                 />
               ) : (
                 <Navigate to="/login" replace />
