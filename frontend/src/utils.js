@@ -45,7 +45,6 @@ export const checkIfValidOdds = (odds) => {
 }
 
 export const checkIfFormValid = (formData) => {
-    console.log(formData)
   return formData.sportsbookID !== '' && 
     formData.teamID !== '' && 
     formData.betTypeID !== '' && 

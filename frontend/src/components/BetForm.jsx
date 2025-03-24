@@ -103,20 +103,54 @@ const BetForm = ({ userID }) => {
 
   // fetch bet data if editing
   useEffect(() => {
-    if (id) {
-      const tempBet = {
-        sportsbookID: '67e0b84b46dabd01144b5549',
-        teamID: '67e0b84b46dabd01144b5549',
-        betTypeID: '1',
-        description: 'test',
-        datePlaced: '2025-03-24',
-        odds: '-110',
-        amountWagered: '100',
-        result: 'pending'
+    const fetchBetData = async () => {
+      if (id) {
+        try {
+          const response = await fetch(`/api/bets/single/${id}`, {
+            credentials: 'include',
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch bet data');
+          }
+
+          const betData = await response.json();
+          console.log('Fetched bet data:', betData);
+        
+
+          const formDataToSet = {
+            sportsbookID: betData.sportsbookID,
+            teamID: betData.teamID,
+            betTypeID: betData.betTypeID,
+            description: betData.description,
+            odds: betData.odds,
+            resultID: betData.resultID,
+            amountWagered: betData.amountWagered,
+            amountWon: betData.amountWon,
+            datePlaced: new Date(betData.datePlaced).toISOString().split('T')[0],
+            spreadLine: !betData.description.includes('Over') && !betData.description.includes('Under') && !betData.description.includes('ML')
+              ? betData.description
+              : '',
+            overUnderType: betData.description.startsWith('Over') ? 'Over' : 'Under',
+            overUnderLine: betData.description.includes('Over') || betData.description.includes('Under')
+              ? betData.description.split(' ')[1]
+              : ''
+          };
+          
+          console.log('Setting form data:', formDataToSet);
+          
+          setFormData(formDataToSet);
+        } catch (error) {
+          console.error('Error fetching bet data:', error);
+        }
       }
-      setFormData(tempBet)
-    }
-  }, [id])
+    };
+
+    fetchBetData();
+  }, [id]);
 
   // update description based on bet type and team
   const updateDescription = () => {
@@ -158,10 +192,11 @@ const BetForm = ({ userID }) => {
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
+    setLoading(true);
     try {
       const betData = {
-        userID: userID,
+        userID,
         sportsbookID: formData.sportsbookID,
         teamID: formData.teamID,
         betTypeID: formData.betTypeID,
@@ -171,30 +206,36 @@ const BetForm = ({ userID }) => {
         resultID: formData.resultID,
         amountWagered: formData.amountWagered,
         amountWon: formData.amountWon,
-      }
+      };
 
-      console.log('bet data', betData)
+      // If we have an id, we're editing
+      const url = id ? `/api/bets/${id}` : '/api/add-bet';
+      const method = id ? 'PUT' : 'POST';
 
-      const response = await fetch('/api/add-bet', {
-        method: 'POST',
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify(betData)
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        alert(errorData.message || 'Failed to save bet');
-        return;
+        throw new Error(errorData.message || 'Failed to save bet');
       }
-      console.log('Bet saved successfully');
+
+      console.log(`Bet ${id ? 'updated' : 'created'} successfully`);
       navigate('/dashboard');
     } catch (error) {
-      console.error('Error saving bet:', error);
+      console.error(`Error ${id ? 'updating' : 'creating'} bet:`, error);
       alert(error.message);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="bet-form-container">
@@ -274,7 +315,7 @@ const BetForm = ({ userID }) => {
                   required
                   step="0.5"
                 />
-                {!spreadError && <div className="error-message">Invalid spread. Must end in .5</div>}
+                {spreadError && <div className="error-message">Invalid spread. Must end in .5</div>}
               </>
             )}
 
@@ -391,13 +432,18 @@ const BetForm = ({ userID }) => {
         </div>
 
         <div className="button-group">
-          <button type="submit" className="submit-button" disabled={!checkIfFormValid(formData)}>
-            {id ? 'Update Bet' : 'Add Bet'}
+          <button 
+            type="submit" 
+            className="submit-button" 
+            disabled={loading || !checkIfFormValid(formData)}
+          >
+            {loading ? 'Saving...' : (id ? 'Update Bet' : 'Add Bet')}
           </button>
           <button
             type="button"
             className="cancel-button"
             onClick={() => navigate('/dashboard')}
+            disabled={loading}
           >
             Cancel
           </button>

@@ -19,6 +19,7 @@ const Dashboard = ({ onLogout, username, userID }) => {
   const [betTypes, setBetTypes] = useState([])
   const [teams, setTeams] = useState([])
   const [results, setResults] = useState([])
+  const [loading, setLoading] = useState(false)
   
 
   useEffect(() => {
@@ -36,7 +37,6 @@ const Dashboard = ({ onLogout, username, userID }) => {
         }
 
         const data = await response.json();
-        console.log('data', data)
         setBets(data);
       } catch (error) {
         console.error('Error fetching bets:', error);
@@ -77,9 +77,34 @@ const Dashboard = ({ onLogout, username, userID }) => {
   }
 
   const handleDeleteBet = async (betId) => {
-    // delete functionality
-    if (window.confirm('Are you sure you want to delete this bet?')) {
-      console.log('Deleting bet:', betId)
+    // Ask for confirmation before deleting
+    if (!window.confirm('Are you sure you want to delete this bet?')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/bets/${betId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete bet');
+      }
+
+      // Remove the deleted bet from state
+      setBets(prevBets => prevBets.filter(bet => bet.id !== betId));
+      console.log('Bet deleted successfully');
+    } catch (error) {
+      console.error('Error deleting bet:', error);
+      alert('Failed to delete bet: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -194,7 +219,12 @@ const Dashboard = ({ onLogout, username, userID }) => {
                   <td>{bet.sportsbookName}</td>
                   <td>{bet.teamName}</td>
                   <td>{bet.betType}</td>
-                  <td>{bet.description}</td>
+                  <td>
+                    {bet.betType === 'Spread' && !bet.description.startsWith('-') && !bet.description.startsWith('+')
+                      ? '+' + bet.description
+                      : bet.description
+                    }
+                  </td>
                   <td>{bet.odds}</td>
                   <td>${bet.amountWagered}</td>
                   <td>${bet.amountWon}</td>
@@ -204,11 +234,19 @@ const Dashboard = ({ onLogout, username, userID }) => {
                     </span>
                   </td>
                   <td className="action-buttons">
-                    <button onClick={() => handleEditBet(bet.id)} className="edit-button">
+                    <button 
+                      onClick={() => handleEditBet(bet.id)} 
+                      className="edit-button"
+                      disabled={loading}
+                    >
                       Edit
                     </button>
-                    <button onClick={() => handleDeleteBet(bet.id)} className="delete-button">
-                      Delete
+                    <button 
+                      onClick={() => handleDeleteBet(bet.id)} 
+                      className="delete-button"
+                      disabled={loading}
+                    >
+                      {loading ? 'Deleting...' : 'Delete'}
                     </button>
                   </td>
                 </tr>
