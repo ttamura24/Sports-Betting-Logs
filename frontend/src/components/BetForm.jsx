@@ -25,7 +25,7 @@ const BetForm = () => {
         amountWagered: '100',
         result: 'pending'
       }
-      setFormData(dummyBet)
+      setFormData(tempBet)
     }
   }, [id])
 

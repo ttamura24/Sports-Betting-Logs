@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../styles/Dashboard.css'
 
-const Dashboard = ({ onLogout }) => {
+const Dashboard = ({ onLogout, username }) => {
   const [bets, setBets] = useState([])
   const [filters, setFilters] = useState({
     sportsbook: '',
@@ -72,7 +72,9 @@ const Dashboard = ({ onLogout }) => {
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
-        <h1 className="dashboard-title">My Betting Log</h1>
+        <h1 className="dashboard-title">
+          {username ? `${username}'s Sports Betting Log` : 'Sports Betting Log'}
+        </h1>
         <div className="header-buttons">
           <button onClick={handleAddBet} className="add-bet-button">
             + Add New Bet

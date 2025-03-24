@@ -23,17 +23,55 @@ const Login = ({ onLogin }) => {
     e.preventDefault()
     try {
       if (isSignup) {
-        // sign up logic here
-        console.log('Signup with:', formData)
-        onLogin(true)
-        navigate('/dashboard')
+        const response = await fetch('http://localhost:5000/api/signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            username: formData.username,
+            password: formData.password,
+          }),
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Signup failed');
+        }
+
+        console.log('Signup successful:', data);
+        onLogin(true, data.user.username);
+        navigate('/dashboard');
       } else {
-        // authentication logic here
-        onLogin(true)
-        navigate('/dashboard')
+        const response = await fetch('http://localhost:5000/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            username: formData.username,
+            password: formData.password,
+          }),
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Login failed');
+        }
+
+        console.log('Login successful:', data);
+        onLogin(true, data.user.username);
+        navigate('/dashboard');
       }
     } catch (err) {
-      setError(isSignup ? 'Error creating account' : 'Invalid credentials')
+      console.error('Error during signup/login:', err);
+      setError(err.message || (isSignup ? 'Error creating account' : 'Invalid credentials'));
     }
   }
 

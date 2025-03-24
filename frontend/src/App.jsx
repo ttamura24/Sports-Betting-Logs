@@ -8,13 +8,16 @@ import BetForm from './components/BetForm'
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [username, setUsername] = useState('')
 
-  const handleLogin = (status) => {
+  const handleLogin = (status, username) => {
     setIsAuthenticated(status)
+    setUsername(username)
   }
 
   const handleLogout = () => {
     setIsAuthenticated(false)
+    setUsername('')
   }
 
   return (
@@ -35,7 +38,10 @@ function App() {
             path="/dashboard" 
             element={
               isAuthenticated ? (
-                <Dashboard onLogout={handleLogout} />
+                <Dashboard 
+                  onLogout={handleLogout}
+                  username={username}
+                />
               ) : (
                 <Navigate to="/login" replace />
               )
