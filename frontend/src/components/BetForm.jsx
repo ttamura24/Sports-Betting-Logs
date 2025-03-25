@@ -2,18 +2,14 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import '../styles/BetForm.css'
 import { calculateAmountWon, checkIfValidOdds, checkIfValidSpread, checkIfValidOverUnder, checkIfFormValid } from '../utils'
+import { useOptions } from './DropdownOptions'
 
 const BetForm = ({ userID }) => {
   const { id } = useParams()
   const navigate = useNavigate()
   
-  // variables for dropdown options
-  const [sportsbooks, setSportsbooks] = useState([])
-  const [teams, setTeams] = useState([])
-  const [betTypes, setBetTypes] = useState([])
-  const [result, setResult] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const { sportsbooks, teams, betTypes, result, loading, error } = useOptions()
+  
   const [spreadError, setSpreadError] = useState(false)
   const [overUnderError, setOverUnderError] = useState(false)
   const [oddsError, setOddsError] = useState(false)
@@ -33,43 +29,6 @@ const BetForm = ({ userID }) => {
     datePlaced: new Date().toISOString().split('T')[0],
   })
   
-  // fetch dropdown options from DB
-  useEffect(() => {
-    const fetchDropdownOptions = async () => {
-      try {
-        setLoading(true);
-        const [sportsbooksRes, teamsRes,betTypesRes, resultRes] = await Promise.all([
-          fetch('/api/sportsbook'),
-          fetch('/api/teams'),
-          fetch('/api/bet-type'),
-          fetch('/api/result'),
-        ]);
-
-        if (!sportsbooksRes.ok) throw new Error('Failed to fetch sportsbooks');
-        if (!teamsRes.ok) throw new Error('Failed to fetch teams');
-        if (!betTypesRes.ok) throw new Error('Failed to fetch bet types');
-        if (!resultRes.ok) throw new Error('Failed to fetch results');
-
-        const sportsbooksData = await sportsbooksRes.json();
-        const teamsData = await teamsRes.json();
-        const betTypesData = await betTypesRes.json();
-        const resultData = await resultRes.json();
-
-        setSportsbooks(sportsbooksData);
-        setTeams(teamsData);
-        setBetTypes(betTypesData);
-        setResult(resultData);
-      } catch (err) {
-        setError(err.message);
-        console.error('Error fetching dropdown options:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDropdownOptions();
-  }, []);
-
   // calculate amount won based on result, odds, and amount wagered
   useEffect(() => {
     const resultText = result.find(r => r._id === formData.resultID)?.result;
@@ -90,7 +49,8 @@ const BetForm = ({ userID }) => {
 
   useEffect(() => {
     if (formData.spreadLine) {
-      setSpreadError(checkIfValidSpread(formData.spreadLine))
+      const isValid = checkIfValidSpread(Number(formData.spreadLine));
+      setSpreadError(!isValid);
     }
   }, [formData.spreadLine])
 
@@ -119,7 +79,6 @@ const BetForm = ({ userID }) => {
 
           const betData = await response.json();
           console.log('Fetched bet data:', betData);
-        
 
           const formDataToSet = {
             sportsbookID: betData.sportsbookID,
@@ -159,9 +118,7 @@ const BetForm = ({ userID }) => {
     let description = '';
     switch (betType) {
       case 'Spread':
-        description = formData.spreadLine > 0 
-          ? `+${formData.spreadLine}`
-          : `${formData.spreadLine}`;
+        description = `${formData.spreadLine}`;
         break;
       case 'Over/Under':
         description = `${formData.overUnderType} ${formData.overUnderLine}`;
@@ -252,7 +209,6 @@ const BetForm = ({ userID }) => {
           >
             <option value="">Select Sportsbook</option>
             {sportsbooks
-              .sort((a, b) => a.name.localeCompare(b.name))
               .map(book => (
                 <option key={book._id} value={book._id}>
                   {book.name}
@@ -272,7 +228,6 @@ const BetForm = ({ userID }) => {
           >
             <option value="">Select Team</option>
             {teams
-              .sort((a, b) => a.name.localeCompare(b.name))
               .map(team => (
                 <option key={team._id} value={team._id}>
                   {team.name} 
@@ -292,7 +247,6 @@ const BetForm = ({ userID }) => {
           >
             <option value="">Select Bet Type</option>
             {betTypes
-              .sort((a, b) => a.betType.localeCompare(b.betType))
               .map(type => (
                 <option key={type._id} value={type._id}>
                   {type.betType}
@@ -394,7 +348,6 @@ const BetForm = ({ userID }) => {
           >
             <option value="">Select Result</option>
             {result
-              .sort((a, b) => a.result.localeCompare(b.result))
               .map(result => (
                 <option key={result._id} value={result._id}>
                   {result.result}

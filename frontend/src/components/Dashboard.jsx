@@ -1,26 +1,23 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useOptions } from './DropdownOptions'
 import '../styles/Dashboard.css'
 
 const Dashboard = ({ onLogout, username, userID }) => {
 
   const [bets, setBets] = useState([])
-  const [sportsbooks, setSportsbooks] = useState([])
+  const { sportsbooks, teams, betTypes, result, loading, error } = useOptions()
   const [filters, setFilters] = useState({
     sportsbook: '',
+    team: '',
     betType: '',
+    result: '',
     dateRange: {
       start: '',
       end: ''
     }
   })
   const navigate = useNavigate()
-
-  const [betTypes, setBetTypes] = useState([])
-  const [teams, setTeams] = useState([])
-  const [results, setResults] = useState([])
-  const [loading, setLoading] = useState(false)
-  
 
   useEffect(() => {
     const fetchBets = async () => {
@@ -113,6 +110,34 @@ const Dashboard = ({ onLogout, username, userID }) => {
     navigate('/login')
   }
 
+  const getFilteredBets = () => {
+    return bets.filter(bet => {
+      // Date range filter
+      if (filters.dateRange.start && filters.dateRange.end) {
+        const betDate = new Date(bet.datePlaced);
+        const startDate = new Date(filters.dateRange.start);
+        const endDate = new Date(filters.dateRange.end);
+        endDate.setHours(23, 59, 59); // Include the entire end date
+        
+        if (betDate < startDate || betDate > endDate) return false;
+      }
+
+      // Sportsbook filter
+      if (filters.sportsbook && bet.sportsbookID !== filters.sportsbook) return false;
+
+      // Team filter
+      if (filters.team && bet.teamID !== filters.team) return false;
+
+      // Bet type filter
+      if (filters.betType && bet.betType !== filters.betType) return false;
+
+      // Result filter
+      if (filters.result && bet.result !== filters.result) return false;
+
+      return true;
+    });
+  };
+
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
@@ -131,6 +156,28 @@ const Dashboard = ({ onLogout, username, userID }) => {
 
       <div className="filters-section">
         <div className="filter-group">
+          <label>Start Date</label>
+          <input
+            type="date"
+            name="start"
+            value={filters.dateRange.start}
+            onChange={handleDateRangeChange}
+            className="date-input"
+          />
+        </div>
+
+        <div className="filter-group">
+          <label>End Date</label>
+          <input
+            type="date"
+            name="end"
+            value={filters.dateRange.end}
+            onChange={handleDateRangeChange}
+            className="date-input"
+          />
+        </div>
+
+        <div className="filter-group">
           <label>Sportsbook</label>
           <select
             name="sportsbook"
@@ -148,38 +195,54 @@ const Dashboard = ({ onLogout, username, userID }) => {
         </div>
 
         <div className="filter-group">
+          <label>Team</label>
+          <select
+            name="team"
+            value={filters.team}
+            onChange={handleFilterChange}
+            className="filter-select"
+          >
+            <option value="">All</option>
+            {teams && teams.map(team => (
+              <option key={team._id} value={team._id}>
+                {team.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="filter-group">
           <label>Bet Type</label>
           <select
             name="betType"
             value={filters.betType}
             onChange={handleFilterChange}
-            className="filter-select"
+            className="filter-select-short"
           >
             <option value="">All</option>
-            <option value="Spread">Spread</option>
-            <option value="Moneyline">Moneyline</option>
-            <option value="Over/Under">Over/Under</option>
+            {betTypes && betTypes.map(bt => (
+              <option key={bt._id} value={bt._id}>
+                {bt.name}
+              </option>
+            ))}
           </select>
         </div>
 
         <div className="filter-group">
-          <label>Date Range</label>
-          <div className="date-inputs">
-            <input
-              type="date"
-              name="start"
-              value={filters.dateRange.start}
-              onChange={handleDateRangeChange}
-              className="date-input"
-            />
-            <input
-              type="date"
-              name="end"
-              value={filters.dateRange.end}
-              onChange={handleDateRangeChange}
-              className="date-input"
-            />
-          </div>
+          <label>Result</label>
+          <select
+            name="result"
+            value={filters.result}
+            onChange={handleFilterChange}
+            className="filter-select-short"
+          >
+            <option value="">All</option>
+            {result && result.map(r => (
+              <option key={r._id} value={r._id}>
+                {r.result}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -200,7 +263,7 @@ const Dashboard = ({ onLogout, username, userID }) => {
             </tr>
           </thead>
           <tbody>
-            {bets
+            {getFilteredBets()
               .sort((a, b) => {
                 // compare dates
                 const dateComparison = new Date(b.datePlaced) - new Date(a.datePlaced);

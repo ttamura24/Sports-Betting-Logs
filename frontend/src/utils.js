@@ -27,7 +27,7 @@ export const calculateAmountWon = (resultText, odds, amountWagered) => {
 export const checkIfValidSpread = (spread) => {
   return !isNaN(spread) && 
     spread !== 0 && 
-    spread % 1 === 0.5 && 
+    Math.abs(spread) % 1 === 0.5 && 
     (spread >= 0.5 || spread <= -0.5);
 }
 
@@ -35,7 +35,7 @@ export const checkIfValidOverUnder = (overUnder) => {
   return !isNaN(overUnder) && 
     overUnder !== 0 && 
     overUnder % 1 === 0.5 && 
-    (overUnder >= 0.5 || overUnder <= -0.5);
+    (overUnder >= 1.5);
 }
 
 export const checkIfValidOdds = (odds) => {

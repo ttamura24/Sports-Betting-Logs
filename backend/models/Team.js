@@ -5,10 +5,6 @@ const teamSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Team name is required'],
   },
-  sportID: {
-    type: String,
-    required: [true, 'Sport ID is required'],
-  },
 });
 
 const Team = mongoose.model('team', teamSchema);
