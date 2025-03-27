@@ -5,13 +5,10 @@ export const useOptions = () => {
   const [teams, setTeams] = useState([]);
   const [betTypes, setBetTypes] = useState([]);
   const [result, setResult] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchDropdownOptions = async () => {
       try {
-        setLoading(true);
         const [sportsbooksRes, teamsRes, betTypesRes, resultRes] = await Promise.all([
           fetch('/api/sportsbook'),
           fetch('/api/teams'),
@@ -28,7 +25,6 @@ export const useOptions = () => {
         const teamsData = await teamsRes.json();
         const betTypesData = await betTypesRes.json();
         const resultData = await resultRes.json();
-        console.log(sportsbooksData, teamsData, betTypesData, resultData);
 
         setSportsbooks(sportsbooksData.sort((a, b) => a.name.localeCompare(b.name)));
         setTeams(teamsData.sort((a, b) => a.name.localeCompare(b.name)));
@@ -36,14 +32,12 @@ export const useOptions = () => {
         setResult(resultData.sort((a, b) => a.result.localeCompare(b.result)));
       } catch (err) {
         setError(err.message);
-        console.error('Error fetching dropdown options:', err);
-      } finally {
-        setLoading(false);
+        console.log('Error fetching dropdown options:', err);
       }
     };
 
     fetchDropdownOptions();
   }, []);
 
-  return { sportsbooks, teams, betTypes, result, loading, error };
+  return { sportsbooks, teams, betTypes, result };
 };

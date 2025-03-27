@@ -8,7 +8,8 @@ const BetForm = ({ userID }) => {
   const { id } = useParams()
   const navigate = useNavigate()
   
-  const { sportsbooks, teams, betTypes, result, loading, error } = useOptions()
+  const { sportsbooks, teams, betTypes, result } = useOptions()
+  const [loading, setLoading] = useState(false)
   
   const [spreadError, setSpreadError] = useState(false)
   const [overUnderError, setOverUnderError] = useState(false)

@@ -6,7 +6,8 @@ import '../styles/Dashboard.css'
 const Dashboard = ({ onLogout, username, userID }) => {
 
   const [bets, setBets] = useState([])
-  const { sportsbooks, teams, betTypes, result, loading, error } = useOptions()
+  const { sportsbooks, teams, betTypes, result } = useOptions()
+  const [loading, setLoading] = useState(false)
   const [filters, setFilters] = useState({
     sportsbook: '',
     team: '',
@@ -18,11 +19,12 @@ const Dashboard = ({ onLogout, username, userID }) => {
     }
   })
   const navigate = useNavigate()
+  
 
   useEffect(() => {
     const fetchBets = async () => {
       try {
-        const response = await fetch(`/api/bets/${userID}`, {
+        const response = await fetch(`/api/bets/${userID}/?startDate=${filters.dateRange.start}&endDate=${filters.dateRange.end}&sportsbook=${filters.sportsbook}&team=${filters.team}&betType=${filters.betType}&result=${filters.result}`, {
           credentials: 'include',
           headers: {
             'Accept': 'application/json'

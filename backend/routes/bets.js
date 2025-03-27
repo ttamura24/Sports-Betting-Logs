@@ -219,11 +219,79 @@ router.get('/bets/:userId', async (req, res) => {
     }
 
     const userId = req.params.userId;
+    const startDate = req.query.startDate;
+    const endDate = req.query.endDate;
+    const sportsbook = req.query.sportsbook;
+    const team = req.query.team;
+    const betType = req.query.betType;
+    const result = req.query.result;
+    console.log('Query params:', { userId, startDate, endDate, sportsbook, team, betType, result });
+
+    // Build match stage properly
+    const matchStage = {
+      userID: userId
+    };
+
+    // Add date filter to match stage if dates are provided
+    if (startDate && endDate) {
+      matchStage.datePlaced = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate).setHours(23, 59, 59)
+      };
+    }
+
+    // Add sportsbook filter to match stage if sportsbook is provided
+    if (sportsbook) {
+      // Look up sportsbook ID by name
+      const sportsbookDoc = await mongoose.connection.db
+        .collection('sportsbook')
+        .findOne({ name: sportsbook });
+      
+      if (sportsbookDoc) {
+        matchStage.sportsbookID = sportsbookDoc._id.toString();
+      }
+    }
+
+    // Add team filter to match stage if team is provided
+    if (team) {
+      // Look up team ID by name
+      const teamDoc = await mongoose.connection.db
+        .collection('teams')
+        .findOne({ name: team });
+      
+      if (teamDoc) {
+        matchStage.teamID = teamDoc._id.toString();
+      }
+    }
+
+    // Add bet type filter to match stage if bet type is provided
+    if (betType) {
+      // Look up bet type ID by name
+      const betTypeDoc = await mongoose.connection.db
+        .collection('bet_type')
+        .findOne({ betType: betType });
+      
+      if (betTypeDoc) {
+        matchStage.betTypeID = betTypeDoc._id.toString();
+      }
+    }
+
+    // Add result filter to match stage if result is provided
+    if (result) {
+      // Look up result ID by name
+      const resultDoc = await mongoose.connection.db
+        .collection('result')
+        .findOne({ result: result });
+      
+      if (resultDoc) {
+        matchStage.resultID = resultDoc._id.toString();
+      }
+    }
 
     // use toString to match types and sanitize input
     const bets = await Bet.aggregate([
       {
-        $match: { userID: userId }
+        $match: matchStage
       },
       {
         $lookup: {
