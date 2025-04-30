@@ -219,20 +219,14 @@ router.get('/bets/:userId', async (req, res) => {
     }
 
     const userId = req.params.userId;
-    const startDate = req.query.startDate;
-    const endDate = req.query.endDate;
-    const sportsbook = req.query.sportsbook;
-    const team = req.query.team;
-    const betType = req.query.betType;
-    const result = req.query.result;
-    console.log('Query params:', { userId, startDate, endDate, sportsbook, team, betType, result });
+    const { startDate, endDate, sportsbook, team, betType, result } = req.query;
 
-    // Build match stage properly
+    // Build initial match stage using the compound index
     const matchStage = {
       userID: userId
     };
 
-    // Add date filter to match stage if dates are provided
+    // Date range uses the compound index (userID_1_datePlaced_1)
     if (startDate && endDate) {
       matchStage.datePlaced = {
         $gte: new Date(startDate),
@@ -240,68 +234,25 @@ router.get('/bets/:userId', async (req, res) => {
       };
     }
 
-    // Add sportsbook filter to match stage if sportsbook is provided
-    if (sportsbook) {
-      // Look up sportsbook ID by name
-      const sportsbookDoc = await mongoose.connection.db
-        .collection('sportsbook')
-        .findOne({ name: sportsbook });
-      
-      if (sportsbookDoc) {
-        matchStage.sportsbookID = sportsbookDoc._id.toString();
-      }
-    }
+    if (sportsbook) matchStage.sportsbookID = sportsbook;
+    if (team) matchStage.teamID = team;
+    if (betType) matchStage.betTypeID = betType;
+    if (result) matchStage.resultID = result;
 
-    // Add team filter to match stage if team is provided
-    if (team) {
-      // Look up team ID by name
-      const teamDoc = await mongoose.connection.db
-        .collection('teams')
-        .findOne({ name: team });
-      
-      if (teamDoc) {
-        matchStage.teamID = teamDoc._id.toString();
-      }
-    }
+    console.log('Query filters:', matchStage);
 
-    // Add bet type filter to match stage if bet type is provided
-    if (betType) {
-      // Look up bet type ID by name
-      const betTypeDoc = await mongoose.connection.db
-        .collection('bet_type')
-        .findOne({ betType: betType });
-      
-      if (betTypeDoc) {
-        matchStage.betTypeID = betTypeDoc._id.toString();
-      }
-    }
-
-    // Add result filter to match stage if result is provided
-    if (result) {
-      // Look up result ID by name
-      const resultDoc = await mongoose.connection.db
-        .collection('result')
-        .findOne({ result: result });
-      
-      if (resultDoc) {
-        matchStage.resultID = resultDoc._id.toString();
-      }
-    }
-
-    // use toString to match types and sanitize input
-    const bets = await Bet.aggregate([
-      {
-        $match: matchStage
-      },
+    const pipeline = [
+      { $match: matchStage },
+      // Join with sportsbook collection
       {
         $lookup: {
           from: 'sportsbook',
-          let: { sportsbookId: { $toString: '$sportsbookID' } },
+          let: { sportsbookId: '$sportsbookID' },
           pipeline: [
             {
               $match: {
-                $expr: {
-                  $eq: [{ $toString: '$_id' }, '$$sportsbookId']
+                $expr: { 
+                  $eq: ['$_id', { $toObjectId: '$$sportsbookId' }]
                 }
               }
             }
@@ -309,31 +260,33 @@ router.get('/bets/:userId', async (req, res) => {
           as: 'sportsbook'
         }
       },
+      // Join with teams collection
       {
         $lookup: {
           from: 'teams',
-          let: { teamId: { $toString: '$teamID' } },
+          let: { teamId: '$teamID' },
           pipeline: [
             {
               $match: {
-                $expr: {
-                  $eq: [{ $toString: '$_id' }, '$$teamId']
-                } 
+                $expr: { 
+                  $eq: ['$_id', { $toObjectId: '$$teamId' }]
+                }
               }
             }
           ],
           as: 'team'
         }
       },
+      // Join with bet_type collection
       {
         $lookup: {
           from: 'bet_type',
-          let: { betTypeId: { $toString: '$betTypeID' } },
+          let: { betTypeId: '$betTypeID' },
           pipeline: [
             {
               $match: {
-                $expr: {
-                  $eq: [{ $toString: '$_id' }, '$$betTypeId']
+                $expr: { 
+                  $eq: ['$_id', { $toObjectId: '$$betTypeId' }]
                 }
               }
             }
@@ -341,37 +294,48 @@ router.get('/bets/:userId', async (req, res) => {
           as: 'betType'
         }
       },
+      // Join with result collection
       {
         $lookup: {
           from: 'result',
-          let: { resultId: { $toString: '$resultID' } },
+          let: { resultId: '$resultID' },
           pipeline: [
             {
               $match: {
-                $expr: {
-                  $eq: [{ $toString: '$_id' }, '$$resultId']
-                } 
+                $expr: { 
+                  $eq: ['$_id', { $toObjectId: '$$resultId' }]
+                }
               }
             }
           ],
           as: 'result'
         }
       },
+      // Project the fields we want
       {
         $project: {
+          _id: 1,
           id: '$_id',
+          sportsbookID: 1,
+          teamID: 1,
+          betTypeID: 1,
+          resultID: 1,
+          amountWagered: 1,
+          amountWon: 1,
+          datePlaced: 1,
+          description: 1,
+          odds: 1,
           sportsbookName: { $arrayElemAt: ['$sportsbook.name', 0] },
           teamName: { $arrayElemAt: ['$team.name', 0] },
           betType: { $arrayElemAt: ['$betType.betType', 0] },
-          amountWagered: 1,
-          amountWon: 1,
-          result: { $arrayElemAt: ['$result.result', 0] },
-          datePlaced: 1,
-          description: 1,
-          odds: 1
+          result: { $arrayElemAt: ['$result.result', 0] }
         }
       }
-    ]);
+    ];
+
+    const bets = await Bet.aggregate(pipeline);
+    console.log('Found bets:', bets.length);
+
     res.json(bets);
   } catch (error) {
     console.error('Error fetching bets:', error);

@@ -35,7 +35,6 @@ export const useOptions = () => {
         console.log('Error fetching dropdown options:', err);
       }
     };
-
     fetchDropdownOptions();
   }, []);
 

@@ -19,7 +19,6 @@ const Dashboard = ({ onLogout, username, userID }) => {
     }
   })
   const navigate = useNavigate()
-  
 
   useEffect(() => {
     const fetchBets = async () => {
@@ -37,6 +36,7 @@ const Dashboard = ({ onLogout, username, userID }) => {
 
         const data = await response.json();
         setBets(data);
+        console.log('Bets:', data);
       } catch (error) {
         console.error('Error fetching bets:', error);
         // Optionally set some error state here
@@ -46,7 +46,7 @@ const Dashboard = ({ onLogout, username, userID }) => {
     if (userID) {
       fetchBets();
     }
-  }, [userID]); // Dependency on userID ensures refetch if user changes
+  }, [userID, filters]); // Dependency on userID and filters ensures refetch if user changes or filters change
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target
@@ -111,34 +111,6 @@ const Dashboard = ({ onLogout, username, userID }) => {
     onLogout()
     navigate('/login')
   }
-
-  const getFilteredBets = () => {
-    return bets.filter(bet => {
-      // Date range filter
-      if (filters.dateRange.start && filters.dateRange.end) {
-        const betDate = new Date(bet.datePlaced);
-        const startDate = new Date(filters.dateRange.start);
-        const endDate = new Date(filters.dateRange.end);
-        endDate.setHours(23, 59, 59); // Include the entire end date
-        
-        if (betDate < startDate || betDate > endDate) return false;
-      }
-
-      // Sportsbook filter
-      if (filters.sportsbook && bet.sportsbookID !== filters.sportsbook) return false;
-
-      // Team filter
-      if (filters.team && bet.teamID !== filters.team) return false;
-
-      // Bet type filter
-      if (filters.betType && bet.betType !== filters.betType) return false;
-
-      // Result filter
-      if (filters.result && bet.result !== filters.result) return false;
-
-      return true;
-    });
-  };
 
   return (
     <div className="dashboard-container">
@@ -224,7 +196,7 @@ const Dashboard = ({ onLogout, username, userID }) => {
             <option value="">All</option>
             {betTypes && betTypes.map(bt => (
               <option key={bt._id} value={bt._id}>
-                {bt.name}
+                {bt.betType}
               </option>
             ))}
           </select>
@@ -265,7 +237,7 @@ const Dashboard = ({ onLogout, username, userID }) => {
             </tr>
           </thead>
           <tbody>
-            {getFilteredBets()
+            {bets
               .sort((a, b) => {
                 // compare dates
                 const dateComparison = new Date(b.datePlaced) - new Date(a.datePlaced);
@@ -294,7 +266,7 @@ const Dashboard = ({ onLogout, username, userID }) => {
                   <td>${bet.amountWagered}</td>
                   <td>${bet.amountWon}</td>
                   <td>
-                    <span className={`result-badge ${bet.result.toLowerCase()}`}>
+                    <span className={`result-badge ${bet.result}`}>
                       {bet.result}
                     </span>
                   </td>
