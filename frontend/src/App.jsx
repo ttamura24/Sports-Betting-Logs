@@ -10,11 +10,13 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [username, setUsername] = useState('')
   const [userID, setUserID] = useState('')
-  
-  const handleLogin = (status, username, userID) => {
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  const handleLogin = (status, username, userID, isAdmin) => {
     setIsAuthenticated(status)
     setUsername(username)
     setUserID(userID)
+    setIsAdmin(isAdmin)
   }
 
   const handleLogout = () => {
@@ -44,6 +46,7 @@ function App() {
                   onLogout={handleLogout}
                   username={username}
                   userID={userID}
+                  isAdmin={isAdmin}
                 />
               ) : (
                 <Navigate to="/login" replace />

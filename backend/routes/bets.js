@@ -15,6 +15,8 @@ router.get('/sportsbook', async (req, res) => {
     const sportsbooks = await mongoose.connection.db
       .collection('sportsbook')
       .find({})
+      .project({ name: 1 })
+      .sort({ name: 1 })
       .toArray();
     res.json(sportsbooks);
   } catch (error) {
@@ -27,6 +29,8 @@ router.get('/teams', async (req, res) => {
     const teams = await mongoose.connection.db
       .collection('teams')
       .find({})
+      .project({ name: 1 })
+      .sort({ name: 1 })
       .toArray();
     res.json(teams);
   } catch (error) {
@@ -39,6 +43,8 @@ router.get('/bet-type', async (req, res) => {
     const betTypes = await mongoose.connection.db
       .collection('bet_type')
       .find({})
+      .project({ betType: 1 })
+      .sort({ betType: 1 })
       .toArray();
     res.json(betTypes);
   } catch (error) {
@@ -51,6 +57,8 @@ router.get('/result', async (req, res) => {
     const result = await mongoose.connection.db
       .collection('result')
       .find({})
+      .project({ result: 1 })
+      .sort({ result: 1 })
       .toArray();
     res.json(result);
   } catch (error) {
@@ -155,7 +163,7 @@ router.put('/bets/:betId', async (req, res) => {
     const updatedBet = await Bet.findByIdAndUpdate(
       req.params.betId,
       {
-        userID,
+        userID: req.params.userId,
         sportsbookID,
         teamID,
         betTypeID,
@@ -210,7 +218,7 @@ router.delete('/bets/:betId', async (req, res) => {
   }
 });
 
-// get all bets for a specific user ... prepare statement / ORM
+// get all bets for a specific user (or all bets if admin) ... prepare statement / ORM
 router.get('/bets/:userId', async (req, res) => {
   try {
     // validate userID format 
@@ -221,10 +229,18 @@ router.get('/bets/:userId', async (req, res) => {
     const userId = req.params.userId;
     const { startDate, endDate, sportsbook, team, betType, result } = req.query;
 
+    // Check if the requesting user is an admin
+    const requestingUser = await mongoose.connection.db
+      .collection('users')
+      .findOne({ _id: new mongoose.Types.ObjectId(userId) });
+
     // Build initial match stage using the compound index
-    const matchStage = {
-      userID: userId
-    };
+    const matchStage = {};
+    
+    // If not admin, only show their own bets
+    if (!requestingUser || !requestingUser.isAdmin) {
+      matchStage.userID = userId;
+    }
 
     // Date range uses the compound index (userID_1_datePlaced_1)
     if (startDate && endDate) {
@@ -311,6 +327,23 @@ router.get('/bets/:userId', async (req, res) => {
           as: 'result'
         }
       },
+      // Join with users collection to get username
+      {
+        $lookup: {
+          from: 'users',
+          let: { userId: '$userID' },
+          pipeline: [
+            {
+              $match: {
+                $expr: { 
+                  $eq: ['$_id', { $toObjectId: '$$userId' }]
+                }
+              }
+            }
+          ],
+          as: 'user'
+        }
+      },
       // Project the fields we want
       {
         $project: {
@@ -325,10 +358,12 @@ router.get('/bets/:userId', async (req, res) => {
           datePlaced: 1,
           description: 1,
           odds: 1,
+          userID: 1,
           sportsbookName: { $arrayElemAt: ['$sportsbook.name', 0] },
           teamName: { $arrayElemAt: ['$team.name', 0] },
           betType: { $arrayElemAt: ['$betType.betType', 0] },
-          result: { $arrayElemAt: ['$result.result', 0] }
+          result: { $arrayElemAt: ['$result.result', 0] },
+          username: { $arrayElemAt: ['$user.username', 0] }
         }
       }
     ];

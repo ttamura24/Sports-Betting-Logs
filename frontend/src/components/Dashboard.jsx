@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useOptions } from './DropdownOptions'
 import '../styles/Dashboard.css'
 
-const Dashboard = ({ onLogout, username, userID }) => {
+const Dashboard = ({ onLogout, username, userID, isAdmin }) => {
 
   const [bets, setBets] = useState([])
   const { sportsbooks, teams, betTypes, result } = useOptions()
@@ -119,9 +119,11 @@ const Dashboard = ({ onLogout, username, userID }) => {
           {username ? `${username}'s Sports Betting Log` : 'Sports Betting Log'}
         </h1>
         <div className="header-buttons">
-          <button onClick={handleAddBet} className="add-bet-button">
-            + Add New Bet
-          </button>
+          {isAdmin && (
+            <button onClick={handleAddBet} className="add-bet-button">
+              + Add New Bet
+            </button>
+          )}
           <button onClick={handleLogout} className="logout-button">
             Logout
           </button>
@@ -224,6 +226,7 @@ const Dashboard = ({ onLogout, username, userID }) => {
         <table>
           <thead>
             <tr>
+              {isAdmin && <th>Username</th>}
               <th>Date</th>
               <th>Sportsbook</th>
               <th>Team</th>
@@ -252,6 +255,7 @@ const Dashboard = ({ onLogout, username, userID }) => {
               })
               .map(bet => (
                 <tr key={bet.id}>
+                  {isAdmin && <td>{bet.username}</td>}
                   <td>{new Date(bet.datePlaced).toLocaleDateString('en-US', { timeZone: 'UTC' })}</td>
                   <td>{bet.sportsbookName}</td>
                   <td>{bet.teamName}</td>

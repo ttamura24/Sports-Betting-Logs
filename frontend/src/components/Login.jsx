@@ -43,7 +43,7 @@ const Login = ({ onLogin }) => {
         }
 
         console.log('Signup successful:', data);
-        onLogin(true, data.user.username);
+        onLogin(true, data.user.username, data.user.id, data.user.isAdmin);
         navigate('/dashboard');
       } else {
         const response = await fetch('/api/login', {
@@ -66,7 +66,7 @@ const Login = ({ onLogin }) => {
         }
 
         console.log('Login successful:', data);
-        onLogin(true, data.user.username, data.user.id);
+        onLogin(true, data.user.username, data.user.id, data.user.isAdmin);
         navigate('/dashboard');
       }
     } catch (err) {
