@@ -234,7 +234,7 @@ router.get('/bets/:userId', async (req, res) => {
       .collection('users')
       .findOne({ _id: new mongoose.Types.ObjectId(userId) });
 
-    // Build initial match stage using the compound index
+    // Build initial match stage
     const matchStage = {};
     
     // If not admin, only show their own bets
@@ -242,20 +242,62 @@ router.get('/bets/:userId', async (req, res) => {
       matchStage.userID = userId;
     }
 
-    // Date range uses the compound index (userID_1_datePlaced_1)
+    // Add all active filters to the match stage
     if (startDate && endDate) {
       matchStage.datePlaced = {
         $gte: new Date(startDate),
         $lte: new Date(endDate).setHours(23, 59, 59)
       };
     }
+    if (sportsbook) {
+      matchStage.sportsbookID = sportsbook;
+    }
+    if (team) {
+      matchStage.teamID = team;
+    }
+    if (betType) {
+      matchStage.betTypeID = betType;
+    }
+    if (result) {
+      matchStage.resultID = result;
+    }
 
-    if (sportsbook) matchStage.sportsbookID = sportsbook;
-    if (team) matchStage.teamID = team;
-    if (betType) matchStage.betTypeID = betType;
-    if (result) matchStage.resultID = result;
+    // Determine which index to use based on the combination of filters
+    let hint = null;
+    
+    if (!requestingUser?.isAdmin) {
+      // For non-admin users, prioritize the most selective compound index
+      if (startDate && endDate) {
+        hint = { userID: 1, datePlaced: 1 };
+      } else if (sportsbook) {
+        hint = { userID: 1, sportsbookID: 1 };
+      } else if (team) {
+        hint = { userID: 1, teamID: 1 };
+      } else if (betType) {
+        hint = { userID: 1, betTypeID: 1 };
+      } else if (result) {
+        hint = { userID: 1, resultID: 1 };
+      } else {
+        hint = { userID: 1 };
+      }
+    } else {
+      // For admin users, choose the most selective single-field index
+      if (startDate && endDate) {
+        hint = { datePlaced: 1 };
+      } else if (sportsbook) {
+        hint = { sportsbookID: "hashed" };
+      } else if (team) {
+        hint = { teamID: "hashed" };
+      } else if (betType) {
+        hint = { betTypeID: "hashed" };
+      } else if (result) {
+        hint = { resultID: "hashed" };
+      }
+      // If no filters, don't use a hint
+    }
 
     console.log('Query filters:', matchStage);
+    console.log('Using index hint:', hint);
 
     const pipeline = [
       { $match: matchStage },
@@ -368,7 +410,9 @@ router.get('/bets/:userId', async (req, res) => {
       }
     ];
 
-    const bets = await Bet.aggregate(pipeline);
+    // Only add hint if we have one
+    const aggregation = hint ? Bet.aggregate(pipeline).hint(hint) : Bet.aggregate(pipeline);
+    const bets = await aggregation;
     console.log('Found bets:', bets.length);
 
     res.json(bets);

@@ -4,6 +4,7 @@ import { useOptions } from './DropdownOptions'
 import '../styles/Dashboard.css'
 
 const Dashboard = ({ onLogout, username, userID, isAdmin }) => {
+  console.log('Dashboard props:', { username, userID, isAdmin });
 
   const [bets, setBets] = useState([])
   const { sportsbooks, teams, betTypes, result } = useOptions()
@@ -119,7 +120,7 @@ const Dashboard = ({ onLogout, username, userID, isAdmin }) => {
           {username ? `${username}'s Sports Betting Log` : 'Sports Betting Log'}
         </h1>
         <div className="header-buttons">
-          {isAdmin && (
+          {!isAdmin && (
             <button onClick={handleAddBet} className="add-bet-button">
               + Add New Bet
             </button>

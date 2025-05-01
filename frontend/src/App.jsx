@@ -13,6 +13,7 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false)
 
   const handleLogin = (status, username, userID, isAdmin) => {
+    console.log('Login data:', { status, username, userID, isAdmin });
     setIsAuthenticated(status)
     setUsername(username)
     setUserID(userID)
@@ -22,6 +23,8 @@ function App() {
   const handleLogout = () => {
     setIsAuthenticated(false)
     setUsername('')
+    setUserID('')
+    setIsAdmin(false)
   }
 
   return (

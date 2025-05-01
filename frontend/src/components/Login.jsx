@@ -37,6 +37,7 @@ const Login = ({ onLogin }) => {
         });
 
         const data = await response.json();
+        console.log(data, 'data from signup')
         
         if (!response.ok) {
           throw new Error(data.error || 'Signup failed');
@@ -60,10 +61,13 @@ const Login = ({ onLogin }) => {
         });
 
         const data = await response.json();
+        console.log(data, 'data from login')
         
         if (!response.ok) {
           throw new Error(data.error || 'Login failed');
         }
+
+        console.log(data.user.isAdmin)
 
         console.log('Login successful:', data);
         onLogin(true, data.user.username, data.user.id, data.user.isAdmin);

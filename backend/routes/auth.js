@@ -79,12 +79,14 @@ router.post('/login', async (req, res) => {
     // set session data
     req.session.userId = user._id;
     req.session.username = user.username;
+    req.session.isAdmin = user.isAdmin;
 
     res.json({
       message: 'Login successful',
       user: {
         id: user._id,
-        username: user.username
+        username: user.username,
+        isAdmin: user.isAdmin
       }
     });
 
