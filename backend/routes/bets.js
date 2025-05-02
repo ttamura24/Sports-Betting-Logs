@@ -244,9 +244,12 @@ router.get('/bets/:userId', async (req, res) => {
 
     // Add all active filters to the match stage
     if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999); // Set to end of the day, and keep as Date object
       matchStage.datePlaced = {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate).setHours(23, 59, 59)
+        $gte: start,
+        $lte: end
       };
     }
     if (sportsbook) {
