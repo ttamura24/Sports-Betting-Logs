@@ -267,12 +267,12 @@ router.get('/bets/:userId', async (req, res) => {
     
     if (!requestingUser?.isAdmin) {
       // For non-admin users, prioritize the most selective compound index
-      if (startDate && endDate) {
+      if (team) {
+        hint = { userID: 1, teamID: 1 };
+      } else if (startDate && endDate) {
         hint = { userID: 1, datePlaced: 1 };
       } else if (sportsbook) {
         hint = { userID: 1, sportsbookID: 1 };
-      } else if (team) {
-        hint = { userID: 1, teamID: 1 };
       } else if (betType) {
         hint = { userID: 1, betTypeID: 1 };
       } else if (result) {
@@ -280,20 +280,21 @@ router.get('/bets/:userId', async (req, res) => {
       } else {
         hint = { userID: 1 };
       }
+
     } else {
       // For admin users, choose the most selective single-field index
-      if (startDate && endDate) {
+      if (team) {
+        hint = { teamID: "hashed" };
+      } else if (startDate && endDate) {
         hint = { datePlaced: 1 };
       } else if (sportsbook) {
         hint = { sportsbookID: "hashed" };
-      } else if (team) {
-        hint = { teamID: "hashed" };
       } else if (betType) {
         hint = { betTypeID: "hashed" };
       } else if (result) {
         hint = { resultID: "hashed" };
       }
-      // If no filters, don't use a hint
+      // if no filters, don't use an index
     }
 
     console.log('Query filters:', matchStage);

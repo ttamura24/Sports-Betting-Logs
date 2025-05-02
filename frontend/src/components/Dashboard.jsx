@@ -237,7 +237,7 @@ const Dashboard = ({ onLogout, username, userID, isAdmin }) => {
               <th>Amount Wagered</th>
               <th>Amount Won</th>
               <th>Result</th>
-              <th>Actions</th>
+              {!isAdmin && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -275,9 +275,10 @@ const Dashboard = ({ onLogout, username, userID, isAdmin }) => {
                       {bet.result}
                     </span>
                   </td>
-                  <td className="action-buttons">
-                    <button 
-                      onClick={() => handleEditBet(bet.id)} 
+                  {!isAdmin && (
+                    <td className="action-buttons">
+                      <button 
+                        onClick={() => handleEditBet(bet.id)} 
                       className="edit-button"
                       disabled={loading}
                     >
@@ -289,8 +290,9 @@ const Dashboard = ({ onLogout, username, userID, isAdmin }) => {
                       disabled={loading}
                     >
                       {loading ? 'Deleting...' : 'Delete'}
-                    </button>
-                  </td>
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
           </tbody>
