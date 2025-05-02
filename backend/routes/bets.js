@@ -218,7 +218,7 @@ router.delete('/bets/:betId', async (req, res) => {
   }
 });
 
-// get all bets for a specific user (or all bets if admin) ... prepare statement / ORM
+// get all bets for a specific user (or all bets if admin) ... prepare statement 
 router.get('/bets/:userId', async (req, res) => {
   try {
     // validate userID format 
